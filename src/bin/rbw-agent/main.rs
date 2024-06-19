@@ -41,6 +41,8 @@ async fn tokio_main(
 }
 
 fn real_main() -> anyhow::Result<()> {
+    rustls::crypto::ring::default_provider().install_default().expect("Failed to install rustls crypto provider");
+
     env_logger::Builder::from_env(
         env_logger::Env::default().default_filter_or("info"),
     )

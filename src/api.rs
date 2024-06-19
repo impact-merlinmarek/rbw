@@ -4,6 +4,11 @@
 
 use crate::prelude::*;
 
+use std::sync::Arc;
+
+use rustls::RootCertStore;
+
+
 use crate::json::{
     DeserializeJsonWithPath as _, DeserializeJsonWithPathAsync as _,
 };
@@ -777,7 +782,19 @@ impl Client {
                 .build()
                 .map_err(|e| Error::CreateReqwestClient { source: e })?)
         } else {
+            let root_store = RootCertStore {
+                roots: webpki_roots::TLS_SERVER_ROOTS.into(),
+            };
+
+            let mut config = rustls::ClientConfig::builder()
+                .with_root_certificates(root_store)
+                .with_no_client_auth();
+
+            // Allow using SSLKEYLOGFILE.
+            config.key_log = Arc::new(rustls::KeyLogFile::new());
+
             Ok(reqwest::Client::builder()
+                .use_preconfigured_tls(config)
                 .user_agent(format!(
                     "{}/{}",
                     env!("CARGO_PKG_NAME"),
